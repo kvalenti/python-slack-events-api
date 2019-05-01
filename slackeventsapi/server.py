@@ -169,7 +169,7 @@ class SlackServer(Flask):
                     logger.debug(r)
                     logger.debug('^^^^^^^^^^^^^^^^')
 
-                    response = make_response(json.dumps(r), 200, {"content_type": "application/json"})
+                    response = make_response(json.dumps(r), 200, {"content-type": "application/json"})
                     response.headers['X-Slack-Powered-By'] = self.package_info
 
                     logger.debug(response)
