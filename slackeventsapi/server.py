@@ -163,7 +163,7 @@ class SlackServer(Flask):
 
                     r = [{'text': {'type': 'plain_text', 'text': '1:Many Internal'}, 'value': '1:Many Internal'}, {'text': {'type': 'plain_text', 'text': '1:many Argentina'}, 'value': '1:many Argentina'}]
 
-                    response = make_response(json.dumps(r), 200)
+                    response = make_response(json.dumps(r), 200, {"content_type": "application/json"})
                     response.headers['X-Slack-Powered-By'] = self.package_info
                     return response
                 response = make_response("", 200)
