@@ -9,11 +9,12 @@ from .version import __version__
 
 
 class SlackServer(Flask):
-    def __init__(self, signing_secret, events_endpoint, interactive_endpoint, emitter, server):
+    def __init__(self, signing_secret, events_endpoint, interactive_endpoint, options_endpoint, emitter, server):
         self.signing_secret = signing_secret
         self.emitter = emitter
         self.events_endpoint = events_endpoint
         self.interactive_endpoint = interactive_endpoint
+        self.options_endpoint = options_endpoint
         self.package_info = self.get_package_info()
 
         # If a server is passed in, bind the event handler routes to it,
@@ -106,44 +107,64 @@ class SlackServer(Flask):
                 return make_response("", 403)
             return True
 
-        @server.route(self.events_endpoint, methods=['GET', 'POST'])
-        def event():
-            bc = base_checks()
-            if bc is not True:
-                return bc
+        if self.events_endpoint:
+            @server.route(self.events_endpoint, methods=['GET', 'POST'])
+            def event():
+                bc = base_checks()
+                if bc is not True:
+                    return bc
 
-            # Parse the request payload into JSON
-            event_data = json.loads(request.data.decode('utf-8'))
-            # Echo the URL verification challenge code back to Slack
-            if "challenge" in event_data:
-                return make_response(
-                    event_data.get("challenge"), 200, {"content_type": "application/json"}
-                )
+                # Parse the request payload into JSON
+                event_data = json.loads(request.data.decode('utf-8'))
+                # Echo the URL verification challenge code back to Slack
+                if "challenge" in event_data:
+                    return make_response(
+                        event_data.get("challenge"), 200, {"content_type": "application/json"}
+                    )
 
-            # Parse the Event payload and emit the event to the event type listener
-            if "event" in event_data:
-                event_type = event_data["event"]["type"]
-                self.emitter.emit(event_type, event_data)
+                # Parse the Event payload and emit the event to the event type listener
+                if "event" in event_data:
+                    event_type = event_data["event"]["type"]
+                    self.emitter.emit(event_type, event_data)
+                    response = make_response("", 200)
+                    response.headers['X-Slack-Powered-By'] = self.package_info
+                    return response
+
+        if self.interactive_endpoint:
+            @server.route(self.interactive_endpoint, methods=['GET', 'POST'])
+            def interactive():
+                bc = base_checks()
+                if bc is not True:
+                    return bc
+
+                # Parse the  payload and emit the event to the payload type listener
+                if "payload" in request.form:
+                    payload = json.loads(request.form['payload'])
+                    payload_type = payload["type"]
+                    self.emitter.emit(payload_type, payload)
+                    response = make_response("", 200)
+                    response.headers['X-Slack-Powered-By'] = self.package_info
+                    return response
                 response = make_response("", 200)
-                response.headers['X-Slack-Powered-By'] = self.package_info
                 return response
 
-        @server.route(self.interactive_endpoint, methods=['GET', 'POST'])
-        def interactive():
-            bc = base_checks()
-            if bc is not True:
-                return bc
+        if self.options_endpoint:
+            @server.route(self.options_endpoint, methods=['GET', 'POST'])
+            def options():
+                bc = base_checks()
+                if bc is not True:
+                    return bc
 
-            # Parse the  payload and emit the event to the payload type listener
-            if "payload" in request.form:
-                payload = json.loads(request.form['payload'])
-                payload_type = payload["type"]
-                self.emitter.emit(payload_type, payload)
+                # Parse the  payload and emit the event to the payload type listener
+                if "payload" in request.form:
+                    payload = json.loads(request.form['payload'])
+                    payload_type = payload["type"]
+                    self.emitter.emit('options', payload)
+                    response = make_response("", 200)
+                    response.headers['X-Slack-Powered-By'] = self.package_info
+                    return response
                 response = make_response("", 200)
-                response.headers['X-Slack-Powered-By'] = self.package_info
                 return response
-            response = make_response("", 200)
-            return response
 
 
 class SlackEventAdapterException(Exception):

@@ -5,10 +5,17 @@ from .server import SlackServer
 class SlackEventAdapter(EventEmitter):
     # Initialize the Slack event server
     # If no endpoint is provided, default to listening on '/slack/events'
-    def __init__(self, signing_secret, events_endpoint="/slack/events", interactive_endpoint="/slack/interactive", server=None, **kwargs):
+    def __init__(self, signing_secret, events_endpoint=None, interactive_endpoint=None, options_endpoint=None, server=None):
         EventEmitter.__init__(self)
         self.signing_secret = signing_secret
-        self.server = SlackServer(signing_secret, events_endpoint, interactive_endpoint, self, server, **kwargs)
+        self.server = SlackServer(
+            signing_secret=signing_secret,
+            events_endpoint=events_endpoint,
+            interactive_endpoint=interactive_endpoint,
+            options_endpoint=options_endpoint,
+            emitter=self,
+            server=server
+        )
 
     def start(self, host='127.0.0.1', port=None, debug=False, **kwargs):
         """
