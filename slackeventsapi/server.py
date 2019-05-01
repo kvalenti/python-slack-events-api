@@ -159,8 +159,11 @@ class SlackServer(Flask):
                 if "payload" in request.form:
                     payload = json.loads(request.form['payload'])
                     payload_type = payload["type"]
-                    self.emitter.emit('options', payload)
-                    response = make_response("", 200)
+                    self.emitter.emit(payload_type, payload)
+
+                    r = [{'text': {'type': 'plain_text', 'text': '1:Many Internal'}, 'value': '1:Many Internal'}, {'text': {'type': 'plain_text', 'text': '1:many Argentina'}, 'value': '1:many Argentina'}]
+
+                    response = make_response(json.dumps(r), 200)
                     response.headers['X-Slack-Powered-By'] = self.package_info
                     return response
                 response = make_response("", 200)
