@@ -7,6 +7,8 @@ import hashlib
 from time import time
 from .version import __version__
 
+import logging
+logger = logging.getLogger(__name__)
 
 class SlackServer(Flask):
     def __init__(self, signing_secret, events_endpoint, interactive_endpoint, options_endpoint, emitter, server):
@@ -163,8 +165,15 @@ class SlackServer(Flask):
 
                     r = {'options': [{'text': {'type': 'plain_text', 'text': '1:Many Internal'}, 'value': '1:Many Internal'}, {'text': {'type': 'plain_text', 'text': '1:many Argentina'}, 'value': '1:many Argentina'}]}
 
+                    logger.debug('^^^^^^^^^^^^^^^^')
+                    logger.debug(r)
+                    logger.debug('^^^^^^^^^^^^^^^^')
+
                     response = make_response(json.dumps(r), 200, {"content_type": "application/json"})
                     response.headers['X-Slack-Powered-By'] = self.package_info
+
+                    logger.debug(response)
+                    logger.debug('^^^^^^^^^^^^^^^^')
                     return response
                 response = make_response("", 200)
                 return response
